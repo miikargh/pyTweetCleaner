@@ -1,52 +1,42 @@
-# pyTweetCleaner
+# tweet_cleaner
 Python module to clean twitter json data and remove unnecessary tweet data
 
-**Usage1:**
+## Installation
 ```python
->>> from pyTweetCleaner import TweetCleaner
->>> tc = TweetCleaner(remove_stop_words=True, remove_retweets=False)
+$ git clone git@github.com:miikargh/tweet_cleaner.git
+$ cd tweet_cleaner
+$ pip install -e .
+```
+
+## Usage 1
+```python
+>>> from tweet_cleaner import TweetCleaner
+>>> tc = TweetCleaner(remove_retweets=False)
 >>> tc.clean_tweets(input_file='data/sample_input.json', output_file='data/sample_output.json')
 ```
 
-**Usage2:**
+## Usage 2
 ```python
->>> from pyTweetCleaner import TweetCleaner
+>>> from tweet_cleaner import TweetCleaner
 >>> sample_text = 'RT @testUser: Cleaning unnecessary data with pyTweetCleaner by @kevalMorabia97. #pyTWEETCleaner, Check it out at https:\/\/github.com\/kevalmorabia97\/pyTweetCleaner and star the repo! '
 >>>
->>> tc = TweetCleaner(remove_stop_words=False, remove_retweets=False)
+>>> tc = TweetCleaner(remove_retweets=False)
 >>> print(tc.get_cleaned_text(sample_text))
 RT @testUser: Cleaning unnecessary data with pyTweetCleaner by @kevalMorabia97 #pyTWEETCleaner Check it out at and star the repo
 >>>
->>> tc = TweetCleaner(remove_stop_words=False, remove_retweets=True)
+>>> tc = TweetCleaner(remove_retweets=True)
 >>> print(tc.get_cleaned_text(sample_text))
- 
->>>
->>> tc = TweetCleaner(remove_stop_words=True, remove_retweets=False, stopwords_file='user_stopwords.txt')
->>> print(tc.get_cleaned_text(sample_text))
-RT @testUser: unnecessary data pyTweetCleaner @kevalMorabia97 #pyTWEETCleaner Check star repo
-
 ```
 
 
-<hr>
-
-**Requirements:**
-1. nltk>=3.2.4
-```
-pip install -r requirements.txt
-```
-
-<hr>
-
-**Data Removed and Kept:**
+## Data Removed and Kept
 ```
 REMOVE:        TWEETS THAT HAVE in_reply_to_status_id != null i.e. COMMENTS ON SOMEONE ELSE'S TWEETS
                TWEETS THAT HAVE lang != en i.e. NOT IN ENGLISH LANGUAGE
                DATA ABOUT DELETED TWEETS
                NON-ASCII CHARACTERS FROM text
                HYPERLINKS FROM text
-               STOPWORDS FROM text
-  
+
 KEEP:          created_at
                id
                text
@@ -60,6 +50,3 @@ KEEP:          created_at
                entities
                retweeted_status
 ```
-
-**Note:** If you want only some of these data fields then comment others in _pyTweetCleaner.py_ file.
-<br>If you want other fields also then add them in _pyTweetCleaner.py_ 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-pyTweetCleaner.py: Python module to clean twitter json data and remove unnecessary tweet data
+tweet_cleaner: Python module to clean twitter json data and remove unnecessary tweet data
 
 REMOVE:        TWEETS THAT HAVE in_reply_to_status_id !=null i.e. COMMENTS ON SOMEONE ELSE'S TWEETS
                TWEETS THAT HAVE lang != en i.e. NOT IN ENGLISH LANGUAGE

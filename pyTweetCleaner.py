@@ -105,8 +105,8 @@ class TweetCleaner:
         if not tweet["lang"] == "en":
             return None  # remove tweets in non english language
         if (
-            not tweet["in_reply_to_status_id"] == None
-            or not tweet["in_reply_to_user_id"] == None
+            not tweet["in_reply_to_status_id"] is None
+            or not tweet["in_reply_to_user_id"] is None
         ):
             return None  # remove comments of any tweet
 
@@ -148,14 +148,14 @@ class TweetCleaner:
             tweet = json.loads(line)
 
             cleaned_tweet = self.get_cleaned_tweet(tweet)
-            if cleaned_tweet == None:
+            if cleaned_tweet is None:
                 continue
 
             if "retweeted_status" in tweet:  # will be present if it is a retweet
                 cleaned_tweet["retweeted_status"] = self.get_cleaned_tweet(
                     tweet["retweeted_status"]
                 )
-                if cleaned_tweet["retweeted_status"] == None:
+                if cleaned_tweet["retweeted_status"] is None:
                     continue
 
             out_file.write(json.dumps(cleaned_tweet) + "\n")

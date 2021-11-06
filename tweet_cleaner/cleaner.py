@@ -1,42 +1,25 @@
-#!/usr/bin/env python
-
-"""
-tweet_cleaner: Python module to clean twitter json data and remove unnecessary tweet data
-
-REMOVE:        TWEETS THAT HAVE in_reply_to_status_id !=null i.e. COMMENTS ON SOMEONE ELSE'S TWEETS
-               TWEETS THAT HAVE lang != en i.e. NOT IN ENGLISH LANGUAGE
-               DATA ABOUT DELETED TWEETS
-               NON-ASCII CHARACTERS FROM text
-               HYPERLINKS FROM text
-               STOPWORDS from text
-
-KEEP:          created_at
-               id
-               text
-               user_id
-               user_name
-               user_screen_name
-               user_followers_count
-               coordinates
-               place
-               retweet_count
-               entities
-               retweeted_status
-"""
-
-import json
 import re
 import string
+from dataclasses import dataclass
+
+
+@dataclass
+class TweetCleanerArgs:
+    remove_retweets: bool = False
+    split_compound_words: bool = False
+    remove_non_ascii: bool = False
+    remove_hyperlinks: bool = True
+    normalize_whitespace: bool = True
 
 
 class TweetCleaner:
-    def __init__(self, remove_retweets=False):
+    def __init__(self, args: TweetCleanerArgs = TweetCleanerArgs()):
         """
         clean unnecessary twitter data
         remove_retweets = True if retweets are to be removed (default = False)
         """
 
-        self.remove_retweets = remove_retweets
+        self.args = args
 
         self.punc_table = str.maketrans(
             "", "", string.punctuation
@@ -64,17 +47,27 @@ class TweetCleaner:
         """
         return " ".join([w for w in text.split(" ") if not "http" in w])
 
+    def normalize_whitespace(self, text):
+        """Replaces all whitespace with spaces."""
+        return " ".join(text.split())
+
     def get_cleaned_text(self, text):
         """
         return cleaned text(string) for provided tweet text(string)
         """
-        cleaned_text = text.replace('"', "").replace("'", "").replace("-", " ")
 
-        cleaned_text = self.remove_non_ascii_chars(cleaned_text)
+        # cleaned_text = text.replace('"', "").replace("'", "").replace("-", " ")
+        cleaned_text = text
+
+        if self.args.normalize_whitespace:
+            cleaned_text = self.normalize_whitespace(cleaned_text)
+
+        if self.args.remove_non_ascii:
+            cleaned_text = self.remove_non_ascii_chars(cleaned_text)
 
         # retweet
         if re.match(r"RT @[_A-Za-z0-9]+:", cleaned_text):  # retweet
-            if self.remove_retweets:
+            if self.args.remove_retweets:
                 return ""
             retweet_info = cleaned_text[
                 : cleaned_text.index(":") + 2
@@ -83,7 +76,8 @@ class TweetCleaner:
         else:
             retweet_info = ""
 
-        cleaned_text = self.remove_hyperlinks(cleaned_text)
+        if self.args.remove_hyperlinks:
+            cleaned_text = self.remove_hyperlinks(cleaned_text)
 
         cleaned_text = cleaned_text.replace("#", "HASHTAGSYMBOL").replace(
             "@", "ATSYMBOL"
@@ -95,73 +89,6 @@ class TweetCleaner:
         cleaned_text = retweet_info + cleaned_text
 
         return cleaned_text
-
-    def get_cleaned_tweet(self, tweet):
-        """
-        return a json dictionary of cleaned data from provided original tweet json dictionary
-        """
-        if not "created_at" in tweet:
-            return None  # remove info about deleted tweets
-        if not tweet["lang"] == "en":
-            return None  # remove tweets in non english language
-        if (
-            not tweet["in_reply_to_status_id"] is None
-            or not tweet["in_reply_to_user_id"] is None
-        ):
-            return None  # remove comments of any tweet
-
-        cleaned_text = self.get_cleaned_text(tweet["text"])
-        if cleaned_text == "":
-            return None
-
-        cleaned_tweet = {}
-
-        cleaned_tweet["created_at"] = tweet["created_at"]
-        cleaned_tweet["id"] = tweet["id"]
-        cleaned_tweet["text"] = cleaned_text
-
-        cleaned_tweet["user"] = {}
-        cleaned_tweet["user"]["id"] = tweet["user"]["id"]
-        cleaned_tweet["user"]["name"] = tweet["user"]["name"]
-        cleaned_tweet["user"]["screen_name"] = tweet["user"]["screen_name"]
-        cleaned_tweet["user"]["followers_count"] = tweet["user"]["followers_count"]
-
-        cleaned_tweet["coordinates"] = tweet["coordinates"]
-        cleaned_tweet["place"] = tweet["place"]
-        cleaned_tweet["retweet_count"] = tweet["retweet_count"]
-        cleaned_tweet["entities"] = tweet["entities"]
-
-        return cleaned_tweet
-
-    def clean_tweets(self, input_file, output_file="cleaned_tweets.json"):
-        """
-        input_file: name or path of input twitter json data where each line is a json tweet
-        output_file: file name or path where cleaned twitter json data is stored (default='cleaned_tweets.json')
-        """
-        in_file = open(input_file, "r")
-        out_file = open(output_file, "w")
-
-        while True:
-            line = in_file.readline()
-            if line == "":
-                break
-            tweet = json.loads(line)
-
-            cleaned_tweet = self.get_cleaned_tweet(tweet)
-            if cleaned_tweet is None:
-                continue
-
-            if "retweeted_status" in tweet:  # will be present if it is a retweet
-                cleaned_tweet["retweeted_status"] = self.get_cleaned_tweet(
-                    tweet["retweeted_status"]
-                )
-                if cleaned_tweet["retweeted_status"] is None:
-                    continue
-
-            out_file.write(json.dumps(cleaned_tweet) + "\n")
-
-        in_file.close()
-        out_file.close()
 
 
 if __name__ == "__main__":
